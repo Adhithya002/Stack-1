@@ -1,0 +1,276 @@
+20. Valid Parentheses
+
+Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+
+import java.util.Stack;
+
+class Solution {
+    public boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+
+        for (char curr : s.toCharArray()) {
+            if (curr == '(' || curr == '[' || curr == '{') {
+                stack.push(curr);
+            } else if (!stack.isEmpty() && isMatchingPair(stack.peek(), curr)) {
+                stack.pop();
+            } else {
+                return false; // Invalid character or mismatched closing bracket
+            }
+        }
+
+        return stack.isEmpty(); // If the stack is empty, all brackets were matched.
+    }
+
+    private boolean isMatchingPair(char open, char close) {
+        return (open == '(' && close == ')') ||
+               (open == '[' && close == ']') ||
+               (open == '{' && close == '}');
+    }
+}
+
+85. Maximal Rectangle
+
+Given a rows x cols binary matrix filled with 0's and 1's, find the largest rectangle containing only 1's and return its area.
+
+class Solution {
+    public int maximalRectangle(char[][] matrix) {
+        if(matrix.length == 0)  return 0;
+        int maxArea = 0;
+        int row = matrix.length;
+        int col = matrix[0].length;
+        int[] dp = new int[col];
+        for(int i=0;i<row;i++){
+            for(int j=0;j<col;j++){
+                dp[j] = matrix[i][j] == '1' ? dp[j]+1 : 0;
+            }
+            //treating dp[j] as histogram, solving max area problem there and updating the max area
+            maxArea = Math.max(maxArea, findMaxAreaInHistogram(dp));
+        }
+        return maxArea;
+    }
+	//84. Largest Rectangle in Histogram code
+    public int findMaxAreaInHistogram(int[] dp){
+        int len = dp.length;
+        int maxArea = 0;
+        int[] left = new int[len];
+        int[] right = new int[len];
+        Stack<Integer> stack = new Stack<>();
+        //traversing left to right, finding left limit
+        for(int i=0;i<len;i++){
+            if(stack.isEmpty()){
+                stack.push(i);
+                left[i] = 0;
+            }else{
+                while(!stack.isEmpty() && dp[stack.peek()] >= dp[i])
+                    stack.pop();
+                left[i] = stack.isEmpty() ? 0 : stack.peek()+1;
+                stack.push(i);
+            }
+        }
+        //doing empty to stack
+        while(!stack.isEmpty())
+            stack.pop();
+        
+        //traversing right to left, find right limit
+        for(int i=len-1;i>=0;i--){
+            if(stack.isEmpty()){
+                stack.push(len-1);
+                right[i] = len - 1;
+            }else{
+                while(!stack.isEmpty() && dp[stack.peek()] >= dp[i])
+                    stack.pop();
+                right[i] = stack.isEmpty() ? len-1 : stack.peek()-1;
+                stack.push(i);
+            }
+        }
+        //traversing the array , caculating area
+        int[] area = new int[len];
+        for(int i=0;i<len;i++){
+            area[i] = (right[i] - left[i] + 1) * dp[i];
+            maxArea = Math.max(maxArea, area[i]);
+        }
+        return maxArea;
+    }
+}
+
+496. Next Greater Element I
+
+The next greater element of some element x in an array is the first greater element that is to the right of x in the same array.
+
+class Solution {
+    public int[] nextGreaterElement(int[] nums1, int[] nums2) {
+        Stack<Integer> stack = new Stack<>();
+        int[] nextgreat = new int[nums2.length];
+
+        for (int i = nums2.length - 1; i >= 0; i--) {
+            int ele = nums2[i];
+
+            // Remove elements from the stack that are smaller than the current element
+            while (!stack.isEmpty() && stack.peek() <= ele) {
+                stack.pop();
+            }
+
+            if (stack.isEmpty()) {
+                nextgreat[i] = -1;
+            } else {
+                nextgreat[i] = stack.peek();
+            }
+
+            stack.push(ele);
+        }
+
+        // Now, we have the next greater elements of nums2 in nextgreat
+        // We can create a map for quick lookups
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums2.length; i++) {
+            map.put(nums2[i], nextgreat[i]);
+        }
+
+        // Create the result array by looking up the map for each element in nums1
+        int[] result = new int[nums1.length];
+        for (int i = 0; i < nums1.length; i++) {
+            result[i] = map.get(nums1[i]);
+        }
+
+        return result;
+    }
+}
+
+907. Sum of Subarray Minimums
+
+Given an array of integers arr, find the sum of min(b), where b ranges over every (contiguous) subarray of arr. Since the answer may be large, return the answer modulo 109 + 7.
+
+ class Solution {
+    public int sumSubarrayMins(int[] arr) {
+        return util2(arr);
+    }
+    int mod = 1000000007;
+
+    //super clever stack problem
+    public int util2(int arr[]){
+        Stack<Integer> s = new Stack<Integer>();
+        long ans = 0;
+        s.push(-1);
+        for(int i = 0;i<=arr.length;i++){
+            while(s.isEmpty() == false && getElem(arr, i)<getElem(arr,s.peek())){
+                int current = s.pop();
+                int right = i-current;
+                int left = current-s.peek();
+                ans = (ans + (long) (left * right * (long)arr[current])) % mod;
+            }
+            s.push(i);
+        } 
+        return (int)ans;
+    }
+
+    public int getElem(int arr[], int index){
+        if(index == arr.length || index == -1){
+            return Integer.MIN_VALUE;
+        }else{
+            return arr[index];
+        }
+    }
+}
+
+84. Largest Rectangle in Histogram
+
+Given an array of integers heights representing the histogram's bar height where the width of each bar is 1, return the area of the largest rectangle in the histogram.
+
+class Solution {
+    public int largestRectangleArea(int[] heights) {
+        Stack<Integer> s=new Stack<>();
+        int nsl[]=new int[heights.length];
+        int nsr[]=new int[heights.length];
+        // finfing Next Smaller To Left
+        for(int i=0;i<heights.length;i++){
+            while(!s.isEmpty() && heights[s.peek()]>=heights[i]){
+                s.pop();
+            }
+            if(s.isEmpty()){
+                nsl[i]=-1;
+            } else {
+                nsl[i]=s.peek();
+            }
+            s.push(i);
+        }
+        s = new Stack<>(); 
+        // finding Next Smaller To Right
+        for(int i=heights.length-1;i>=0;i--){
+            while(!s.isEmpty() && heights[s.peek()]>=heights[i]){
+                s.pop();
+            }
+            if(s.isEmpty()){
+                nsr[i]=heights.length;
+            } else {
+                nsr[i]=s.peek();
+            }
+            s.push(i);
+        }
+        int ans=0;
+        for(int i=0;i<heights.length;i++){
+            int area=(nsr[i]-nsl[i]-1)*heights[i];
+            ans=Math.max(ans,area);
+        }
+        return ans;
+    }
+}
+
+Nearest Smaller Element
+
+Given an array, find the nearest smaller element G[i] for every element A[i] in the array such that the element has an index smaller than i.
+
+public class Solution {
+    public int[] prevSmaller(int[] A) {
+        Stack<Integer> s = new Stack<>();
+        int[] a = new int[A.length];
+        int i=0;
+        while(i<A.length){
+            if(s.empty()){
+                a[i] = -1;
+                s.push(A[i]);
+                i++;
+            }
+            else if(!s.empty()&&s.peek()<A[i]){
+                a[i] = s.peek();
+                s.push(A[i]);
+                i++;
+            
+            }
+            else if(!s.empty()&&s.peek()>=A[i]){
+                s.pop();
+            }
+        }
+        return a;
+    }
+}
+
+
+Sort a stack
+ 
+
+Given a stack, the task is to sort it such that the top of the stack has the greatest element.
+
+
+
+/*Complete the function below*/
+class GfG{
+	public Stack<Integer> sort(Stack<Integer> s)
+	{
+	    if(!s.isEmpty()){
+	        int top=s.pop();
+	        sort(s);
+	        si(s,top);
+	    }
+	    return s;
+		//add code here.
+	}
+	static void si(Stack<Integer>s,int e){
+	    if(s.isEmpty()||e>s.peek()){
+	        s.push(e);
+	        return;
+	    }
+	    int top=s.pop();
+	    si(s,e);
+	    s.push(top);
+	}
+}
